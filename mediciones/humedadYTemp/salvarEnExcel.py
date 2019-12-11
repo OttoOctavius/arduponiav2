@@ -5,8 +5,9 @@ import serial
 #Se uso el link https://automatetheboringstuff.com/chapter12/ de referencia
 #ser = serial.Serial('/dev/ttyACM0',9600, timeout=1)
 
+#puerto: normalmente '/dev/ttyACM0' o '/dev/ttyACM1'
 def ciclograbado(archivo,puerto):
-    ser = serial.Serial('/dev/ttyACM1') 
+    ser = serial.Serial() 
     grabar(archivo,ser)
     ser.close()
 
@@ -44,18 +45,15 @@ def salvarEnExcel(diccionario, pagina):
     
     wb.save('Menta.xlsx') #Fortato ods de OpenOffice da corrupto
 
-def objetearEspectro(archivo):
-    diccionario = {'key':[]}
+def objetearHumedad(archivo):
+    diccionario = {'hum':[],'segundos':[]}
     f = open(archivo + ".txt","r")
+    tiempo = 0
     for line in f.readlines():
-        aux = line.rstrip().split(',')
-        if all(map(lambda x: x.isalpha(),aux)):
-            for variable in aux:
-                diccionario[variable] = []
-                diccionario['key'].append(variable)
-        else:
-            for variable,valor in zip(diccionario['key'],aux):
-                diccionario[variable].append(float(valor))
+        texto,humedad = line.rstrip().split(':')
+        diccionario['hum'].append(float(humedad))
+        diccionario['segundos'].append(tiempo)
+        tiempo = tiempo +10
     return diccionario
             
     
