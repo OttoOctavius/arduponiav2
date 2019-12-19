@@ -1,6 +1,7 @@
 #include <DHT.h>
 #include <DHT_U.h>
-
+#include "SparkFun_AS7265X.h"
+AS7265X sensor;
 // -------------------------------------------|
 // Enviroment humidity and temperature Sensor |
 // -------------------------------------------|
@@ -60,6 +61,25 @@ void setupEarthSensor() {
   pinMode(pinIntraH, OUTPUT);
 }
 
+void setupEspectometer() {
+  delay(1000);
+  
+  if(sensor.begin() == false)
+  {
+    Serial.println("Reset the Arduino Shinji, Spectometer not working :/");
+    while(1);
+  }
+  //Led status
+  sensor.disableIndicator();
+  //LED. 0 = White, 1 = IR, 2 = UV
+  sensor.disableBulb(0);
+  sensor.disableBulb(1);
+  sensor.disableBulb(2);
+  Serial.print("Using channels:");
+  Serial.println("A,B,C,D,E,F,G,H,R,I,S,J,T,U,V,W,K,L");
+  //El orden de canales es por longitud de onda, no alfabetico
+}
+
 void setup() {
 
   //habilito pin para relay que acciona la bomba
@@ -69,9 +89,8 @@ void setup() {
   Serial.begin(9600);
 
   setupEnviromentSensor();
-
   setupEarthSensor();
-
+  setupEspectometer();
 }
 
 void sensordhtRead(){
@@ -112,21 +131,87 @@ void sensorEarthWriteValues() {
   Serial.println();
 }
 
+float NDVI(){
+  //float RED = sensor.getCalibratedS() + sensor.getCalibratedJ() + sensor.getCalibratedT();
+  //float IR = sensor.getCalibratedH() + sensor.getCalibratedR() + sensor.getCalibratedI();00
+  float IR = sensor.getCalibratedR();
+  float RED = sensor.getCalibratedJ();
+  return ((IR - RED) / (IR + RED))*100;
+}
+
+void sensorSpectometerWriteValues(){
+  Serial.print("Values Spectometer:");
+  Serial.print(sensor.getCalibratedA());
+  Serial.print(",");
+  Serial.print(sensor.getCalibratedB());
+  Serial.print(",");
+  Serial.print(sensor.getCalibratedC());
+  Serial.print(",");
+  Serial.print(sensor.getCalibratedD());
+  Serial.print(",");
+  Serial.print(sensor.getCalibratedE());
+  Serial.print(",");
+  Serial.print(sensor.getCalibratedF());
+  Serial.print(",");
+  Serial.print(sensor.getCalibratedG());
+  Serial.print(",");
+  Serial.print(sensor.getCalibratedH());
+  Serial.print(",");
+
+  Serial.print(sensor.getCalibratedR());
+  Serial.print(",");
+  Serial.print(sensor.getCalibratedI());
+  Serial.print(",");
+  Serial.print(sensor.getCalibratedS());
+  Serial.print(",");  
+  Serial.print(sensor.getCalibratedJ());
+  Serial.print(",");
+  Serial.print(sensor.getCalibratedT());
+  Serial.print(",");
+  Serial.print(sensor.getCalibratedU());
+  Serial.print(",");
+  Serial.print(sensor.getCalibratedV());
+  Serial.print(",");
+  Serial.print(sensor.getCalibratedW());
+  Serial.print(",");  
+  Serial.print(sensor.getCalibratedK());
+  Serial.print(",");
+  Serial.print(sensor.getCalibratedL());
+  Serial.print(",");
+  Serial.print(NDVI());
+  Serial.print(",");
+  Serial.println(sensor.getTemperature());
+
+  Serial.println();
+  Serial.print("Temp Spectometer:");
+  Serial.println(sensor.getTemperature());
+  
+  sensor.disableBulb(0);
+  sensor.disableBulb(1);
+  sensor.disableBulb(2);
+}
+
 bool verifyHumidityEarth() {
-  return (earthHumidityValue < dry && earthHumidityValue > (dry - intervals));
+  return earthHumidityValue < (dry - intervals);//(earthHumidityValue < dry && earthHumidityValue > (dry - intervals));
 }
 
 void loop() {
+  sensor.takeMeasurements();
+  sensor.enableBulb(0);
+  sensor.enableBulb(1);
+  sensor.enableBulb(2);
+  
   sensorEarthRead();
   sensordhtRead();
 
   sensordhtWriteValues();
   sensorEarthWriteValues();
-
+  sensorSpectometerWriteValues();
+  
   Serial.print("Tiempo:");
   Serial.println(tiempo+acumulado);
   
-  if(verifyHumidityEarth()){
+  if(!verifyHumidityEarth() || NDVI() < 50.0){
   digitalWrite(pinRelay, HIGH);
   delay(1000);
   digitalWrite(pinRelay, LOW);
