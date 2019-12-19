@@ -1,0 +1,10 @@
+Es implementado por el integrado KY-015
+
+Operating Voltage	3.3V to 5.5V
+Humidity measurement range	20% to 90% RH
+Humidity measurement accuracy	±5% RH
+Humidity measurement resolution	1% RH
+Temperature measurement range	0ºC to 50ºC [32ºF to 122ºF]
+Temperature measurement accuracy	±2ºC
+Temperature measurement resolution	1ºC
+Signal transmission range	20m
